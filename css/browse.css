@@ -1,0 +1,154 @@
+:root {
+    --primary-color: #4285f4;
+    --secondary-color: #34a853;
+    --danger-color: #dc3545;
+    --text-color: #333;
+    --border-color: #ddd;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.back-button {
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.back-button:hover {
+    opacity: 0.9;
+}
+
+.drop-zone {
+    border: 2px dashed var(--primary-color);
+    padding: 20px;
+    text-align: center;
+    color: var(--primary-color);
+    margin: 20px 0;
+    border-radius: 8px;
+    background: #f0f4ff;
+    cursor: pointer;
+}
+
+.drop-zone.dragover {
+    background: #e0e8ff;
+}
+
+.drive-item {
+    margin: 8px 0;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+}
+
+.drive-item:hover {
+    transform: translateX(4px);
+}
+
+.item-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.item-icon {
+    width: 24px;
+    text-align: center;
+    color: #666;
+}
+
+.item-name {
+    flex-grow: 1;
+    color: var(--text-color);
+}
+
+.item-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.copy-btn, .rename-btn, .delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    color: var(--primary-color);
+    background: #f0f4ff;
+}
+
+.rename-btn:hover {
+    color: var(--secondary-color);
+    background: #f0f4ff;
+}
+
+.delete-btn:hover {
+    color: var(--danger-color);
+    background: #f0f4ff;
+}
+
+.file-info {
+    font-size: 0.9em;
+    color: #666;
+    margin-left: 12px;
+}
+
+.children {
+    margin-left: 36px;
+    border-left: 2px solid var(--border-color);
+    padding-left: 12px;
+}
+
+.loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--secondary-color);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    animation: slideIn 0.3s ease-out;
+    display: none;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
