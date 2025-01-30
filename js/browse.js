@@ -3,19 +3,56 @@ let currentAccount;
 let selectedDestinationId = 'root';
 let selectedFiles = new Set();
 
-async function fetchDriveContents(folderId = 'root') {
-    let allFiles = [];
-    let pageToken = null;
-    do {
-        const response = await fetch(
-            `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,size,modifiedTime,parents),nextPageToken&pageToken=${pageToken || ''}`, 
-            { headers: { 'Authorization': `Bearer ${accessToken}` } }
-        );
+async function fetchDriveContents(folderId = "root") {
+    try {
+        let response = await fetch(`https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,size,modifiedTime,parents)`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+
+        if (response.status === 401) {
+            console.warn("Access token expired. Refreshing...");
+            await refreshAccessToken();
+            return fetchDriveContents(folderId); // Retry after refresh
+        }
+
         const data = await response.json();
-        allFiles = allFiles.concat(data.files);
-        pageToken = data.nextPageToken || null;
-    } while (pageToken);
-    return allFiles;
+        return data.files;
+    } catch (error) {
+        console.error("Error fetching Drive contents:", error);
+        return [];
+    }
+}
+async function refreshAccessToken() {
+    if (!currentAccount || !currentAccount.refreshToken) {
+        console.error("No refresh token available!");
+        return;
+    }
+
+    try {
+        const response = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                client_id: "YOUR_CLIENT_ID",
+                client_secret: "YOUR_CLIENT_SECRET",
+                refresh_token: currentAccount.refreshToken,
+                grant_type: "refresh_token",
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.access_token) {
+            currentAccount.accessToken = data.access_token;
+            localStorage.setItem("gdrive_accounts", JSON.stringify([currentAccount]));
+            accessToken = data.access_token;
+            console.log("Token refreshed successfully!");
+        } else {
+            console.error("Failed to refresh token:", data);
+        }
+    } catch (error) {
+        console.error("Error refreshing access token:", error);
+    }
 }
 
 function getFileIcon(mimeType) {
@@ -341,6 +378,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     accessToken = currentAccount.accessToken;
     refreshContents();
+
+     // 🔄 Auto Refresh Token Every 50 Minutes
+     setInterval(refreshAccessToken, 50 * 60 * 1000);
 
     // Move button handlers
     document.getElementById('moveButton').addEventListener('click', () => {
