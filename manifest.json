@@ -1,0 +1,10 @@
+{
+    "name": "MUlti Drive",
+    "description": "A simple PWA with offline cache.",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#000000"
+   
+  }
+  
