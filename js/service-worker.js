@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
   '/js/browse.js',
   '/js/index.js',
   
+  
 ];
 
 // Install event: Cache assets during service worker installation
