@@ -2,170 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Drive Manager</title>
     <link rel="stylesheet" href="css/index.css">
+
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Google Drive Account Manager</h1>
-            <button class="btn btn-primary" id="addAccountBtn">➕ Add Google Account</button>
+    <div class="header">
+        <h1>Google Drive Account Manager</h1>
+        <button class="btn btn-primary" id="addAccountBtn">➕ Add Google Account</button>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="🔍 Search for folders...">
+            <button class="btn btn-primary" id="searchBtn">Search</button>
+      
         </div>
-
-        <div class="account-list" id="accountList"></div>
     </div>
+    
+    <div class="container">
+        <h2 id="accountTitle">Accounts</h2>
+        <div class="account-list" id="accountList"></div>
+    
+        <h2 id="searchTitle" style="display: none;">Search Results</h2>
+        <div class="search-results" id="searchResults"></div>
+    </div>
+    
+    
 
-    <script type="module">
-        import { CLIENT_ID } from './credentials.js';
+    <script src="/js/index.js" type="module"></script>
 
-        let tokenClient;
-        let accounts = JSON.parse(localStorage.getItem('gdrive_accounts')) || [];
 
-        // Initialize Google API
-        function initGoogleAPI() {
-            return new Promise((resolve) => {
-                gapi.load('client', () => {
-                    gapi.client.init({}).then(resolve);
-                });
-            });
-        }
-
-        // Add Account Button Handler
-        document.getElementById('addAccountBtn').addEventListener('click', () => {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile',
-                callback: async (response) => {
-                    if (response.error) {
-                        console.error('Authentication error:', response.error);
-                        return;
-                    }
-
-                    try {
-                        // Get user info
-                        const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                            headers: { 'Authorization': `Bearer ${response.access_token}` }
-                        }).then(res => res.json());
-
-                        // Get storage info
-                        const storageInfo = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
-                            headers: { 'Authorization': `Bearer ${response.access_token}` }
-                        }).then(res => res.json());
-
-                        // Create account object
-                        const account = {
-                            name: userInfo.name,
-                            email: userInfo.email,
-                            picture: userInfo.picture,
-                            accessToken: response.access_token,
-                            storage: storageInfo.storageQuota
-                        };
-
-                        // Save to localStorage
-                        accounts.push(account);
-                        localStorage.setItem('gdrive_accounts', JSON.stringify(accounts));
-                        renderAccounts();
-                    } catch (error) {
-                        console.error('Error fetching user data:', error);
-                    }
-                }
-            });
-            tokenClient.requestAccessToken({ prompt: 'consent' });
-        });
-
-        // Render accounts
-        function renderAccounts() {
-            const accountList = document.getElementById('accountList');
-            accountList.innerHTML = accounts.map((account, index) => {
-                const usage = parseInt(account.storage?.usage || 0);
-                const limit = parseInt(account.storage?.limit || 1);
-                const usagePercentage = ((usage / limit) * 100).toFixed(1);
-
-                let color;
-                if (usagePercentage < 60) {
-                    color = "var(--secondary-color)";
-                } else if (usagePercentage < 80) {
-                    color = "var(--warning-color)";
-                } else {
-                    color = "var(--danger-color)";
-                }
-
-                return `
-                    <div class="account-card">
-                        <div class="account-header">
-                            <img src="${account.picture}" class="profile-pic" alt="Profile Picture">
-                            <div class="user-info">
-                                <h3 class="user-name">${account.name}</h3>
-                                <p class="user-email">${account.email}</p>
-                            </div>
-                        </div>
-                        <div class="storage-info">
-                            <div class="storage-bar">
-                                <div class="storage-fill" style="width: ${usagePercentage}%; background: ${color};"></div>
-                            </div>
-                            <p>${formatBytes(usage)} / ${formatBytes(limit)} (${usagePercentage}%) Used</p>
-                        </div>
-                        <div class="account-actions">
-                            <button class="btn btn-primary browse-btn" data-email="${account.email}">Browse</button>
-                            <button class="btn btn-danger disconnect-btn" data-index="${index}">Disconnect</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            // Add event listeners for dynamic buttons
-            document.querySelectorAll('.browse-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const email = e.target.dataset.email;
-                    handleBrowseClick(email);
-                });
-            });
-
-            document.querySelectorAll('.disconnect-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const index = parseInt(e.target.dataset.index);
-                    disconnectAccount(index);
-                });
-            });
-        }
-
-        // Format bytes
-        function formatBytes(bytes) {
-            bytes = parseInt(bytes);
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        // Disconnect account
-        function disconnectAccount(index) {
-            accounts.splice(index, 1);
-            localStorage.setItem('gdrive_accounts', JSON.stringify(accounts));
-            renderAccounts();
-        }
-
-        // Handle browse click
-        function handleBrowseClick(email) {
-            const account = accounts.find(acc => acc.email === email);
-            if (account) {
-                window.location.href = `browse.html?account=${encodeURIComponent(email)}`;
-            } else {
-                alert('Account not found!');
-            }
-        }
-
-        // Initialize
-        (async () => {
-            await initGoogleAPI();
-            renderAccounts();
-        })();
-    </script>
-
-    <!-- Google API scripts -->
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
 </body>

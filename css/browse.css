@@ -152,3 +152,106 @@ body {
     from { transform: translateX(100%); }
     to { transform: translateX(0); }
 }
+
+/* Add these styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 5px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.modal-body {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 10px 0;
+}
+
+.modal-folder-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-folder-item i {
+    margin-right: 10px;
+    color: #666;
+}
+
+.select-folder-btn, .enter-folder-btn {
+    margin-left: auto;
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.enter-folder-btn {
+    background-color: #2196F3;
+    margin-left: 5px;
+}
+
+.file-checkbox {
+    margin-right: 10px;
+}
+
+.move-button {
+    background-color: #2196F3;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.move-button:disabled {
+    background-color: #9E9E9E;
+    cursor: not-allowed;
+}
+
+
+.create-folder-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+.create-folder-button:hover {
+    background-color: #45a049;
+}
