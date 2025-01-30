@@ -1,12 +1,6 @@
 const CACHE_NAME = 'offline-cache-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/browse.html', // Your stylesheets
-  '/css/browse.css',
-'/css/index.css',
-  '/js/browse.js',
-  '/js/index.js',
+
   
 ];
 

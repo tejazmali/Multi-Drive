@@ -24,7 +24,6 @@ body {
     background: var(--primary-color);
     color: white;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
     transition: opacity 0.2s;
 }
@@ -82,6 +81,8 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+
+ 
 }
 
 .copy-btn, .rename-btn, .delete-btn {
@@ -92,6 +93,7 @@ body {
     padding: 4px;
     border-radius: 4px;
     transition: all 0.2s;
+    box-shadow: none;
 }
 
 .copy-btn:hover {
@@ -121,15 +123,6 @@ body {
     padding-left: 12px;
 }
 
-.loading {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
@@ -140,12 +133,13 @@ body {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: var(--secondary-color);
-    color: white;
+    background: white;
+    color: #333;
     padding: 12px 20px;
     border-radius: 8px;
     animation: slideIn 0.3s ease-out;
     display: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes slideIn {
@@ -213,12 +207,11 @@ body {
     background-color: #4CAF50;
     color: white;
     border: none;
-    border-radius: 3px;
     cursor: pointer;
 }
 
 .enter-folder-btn {
-    background-color: #2196F3;
+    background-color: #4285f4;
     margin-left: 5px;
 }
 
@@ -227,13 +220,16 @@ body {
 }
 
 .move-button {
-    background-color: #2196F3;
+    background-color: #4285f4;
     color: white;
     padding: 10px 15px;
     border: none;
-    border-radius: 5px;
+    border-radius: 30px;
     cursor: pointer;
     margin-left: 10px;
+}
+.move-button:hover{
+    opacity: 0.9;
 }
 
 .move-button:disabled {
@@ -243,15 +239,53 @@ body {
 
 
 .create-folder-button {
-    background-color: #4CAF50;
+ margin-bottom: 20px;
+    padding: 10px 20px;
+    background: var(--primary-color);
     color: white;
     border: none;
-    padding: 10px 15px;
-    font-size: 16px;
     cursor: pointer;
-    margin: 10px 0;
-    border-radius: 5px;
+    transition: opacity 0.2s;
 }
 .create-folder-button:hover {
-    background-color: #45a049;
+    opacity: 0.9;
 }
+
+
+/* General Button Styling */
+button {
+
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 50px;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+.material-symbols-outlined{
+    font-size: 20px;
+
+ 
+}
+.close-modal{
+    background-color: transparent;
+    box-shadow: none;
+ 
+}
+.enter-folder-btn{
+    background-color: transparent;
+    box-shadow: none;
+ 
+}
+.btn{
+    background-color: #4285f4;
+    color: white;
+} 
+

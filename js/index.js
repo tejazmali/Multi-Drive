@@ -92,8 +92,8 @@ function renderAccounts() {
                     <p>${formatBytes(usage)} / ${formatBytes(limit)} (${usagePercentage}%) Used</p>
                 </div>
                 <div class="account-actions">
-                    <button class="btn btn-primary browse-btn" data-email="${account.email}">Browse</button>
-                    <button class="btn btn-danger disconnect-btn" data-index="${index}">Disconnect</button>
+                    <button class="btn btn-primary browse-btn" data-email="${account.email}"> <i class="material-symbols-outlined"> folder_open </i>Browse</button>
+                    <button class="btn btn-danger disconnect-btn" data-index="${index}"><i class="material-symbols-outlined">  do_not_disturb_on </i></button>
                 </div>
             </div>
         `;
@@ -194,23 +194,23 @@ async function searchFolders(account, query) {
 
 function renderSearchResults(results) {
     const searchResultsDiv = document.getElementById('searchResults');
-    searchResultsDiv.innerHTML = ''; 
+    searchResultsDiv.innerHTML = '';
 
     if (results.length === 0) {
         searchResultsDiv.innerHTML = '<p>No folders found.</p>';
         return;
     }
 
-    results.forEach(result => {
+    let content = results.map(result => {
         const { account, folders } = result;
 
-        let accountSection = `
+        return `
             <div class="account-card">
                 <div class="account-header">
                     <img src="${account.picture}" class="profile-pic" alt="Profile Picture">
                     <div class="user-info">
-                        <h3>${account.name}</h3>
-                        <p>${account.email}</p>
+                        <h3>${escapeHTML(account.name)}</h3>
+                        <p>${escapeHTML(account.email)}</p>
                     </div>
                 </div>
                 <div class="folder-list">
@@ -218,35 +218,56 @@ function renderSearchResults(results) {
                     ${folders.map(folder => `
                         <div class="folder-item">
                             <div>
-                                <strong>${folder.name}</strong>
+                                <strong>${escapeHTML(folder.name)}</strong>
                                 <p>Last Modified: ${new Date(folder.modifiedTime).toLocaleString()}</p>
-                                <p>Owner: ${folder.owners?.[0]?.displayName || 'Unknown'}</p>
+                                <p>Owner: ${escapeHTML(folder.owners?.[0]?.displayName || 'Unknown')}</p>
                             </div>
-                            <button class="browse-btn" data-account="${account.email}" data-folder="${folder.id}">📂 Browse</button>
-                            <button class="copy-btn" data-id="${folder.id}" title="Copy Folder ID">📋</button>
+                            <button class="browse-btn btn" data-account="${encodeURIComponent(account.email)}" data-folder="${encodeURIComponent(folder.id)}">
+                                <i class="material-symbols-outlined">folder_open</i>
+                            </button>
+                            <button class="copy-btn btn" data-id="${encodeURIComponent(folder.id)}" title="Copy Folder ID">
+                                <i class="material-symbols-outlined">content_copy</i>
+                            </button>
                         </div>
                     `).join('')}
                 </div>
             </div>
         `;
+    }).join('');
 
-        searchResultsDiv.innerHTML += accountSection;
-    });
+    searchResultsDiv.innerHTML = content;
 
-    document.querySelectorAll('.browse-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const email = e.target.dataset.account;
-            const folderId = e.target.dataset.folder;
-            window.location.href = `browse.html?account=${encodeURIComponent(email)}&folder=${encodeURIComponent(folderId)}`;
-        });
-    });
+    // Use event delegation for efficiency
+    searchResultsDiv.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
 
-    document.querySelectorAll('.copy-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const folderId = e.target.dataset.id;
+        if (btn.classList.contains('browse-btn')) {
+            const email = btn.dataset.account;
+            const folderId = btn.dataset.folder;
+            window.location.href = `browse.html?account=${email}&folder=${folderId}`;
+        } else if (btn.classList.contains('copy-btn')) {
+            const folderId = btn.dataset.id;
             navigator.clipboard.writeText(folderId);
-            e.target.innerText = "✅ Copied!";
-            setTimeout(() => (e.target.innerText = "📋"), 1000);
-        });
+
+            // Change icon temporarily
+            const icon = btn.querySelector('i');
+            icon.innerText = 'check';
+
+            setTimeout(() => {
+                icon.innerText = 'content_copy';
+            }, 1000);
+        }
     });
+}
+
+// Helper function to escape HTML to prevent XSS
+function escapeHTML(str) {
+    return str.replace(/[&<>"']/g, (match) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    }[match]));
 }

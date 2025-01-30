@@ -100,6 +100,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary {
@@ -116,3 +117,60 @@ body {
     opacity: 0.9;
     transform: translateY(-1px);
 }
+.search-container {
+    display: flex;
+ margin-top: 10px;
+border-radius: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    margin: 0 auto;
+    margin-top: 10px;
+ 
+ 
+}
+
+#searchInput {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-top-left-radius: 30px;
+    border-bottom-left-radius: 30px;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+#searchInput:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+#searchBtn {
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-top-right-radius: 30px;
+    border-bottom-right-radius: 30px;
+
+   
+}
+
+
+.btn-primary:hover {
+    background-color: #0056b3;
+
+}
+
+.material-symbols-outlined {
+    font-size: 20px;
+}
+#searchBtn{
+    transform: none;
+}
+#addAccountBtn{
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 13px;
+ 
+}
+

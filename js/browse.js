@@ -264,7 +264,7 @@ function copyToClipboard(text) {
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
     toast.textContent = message;
-    toast.style.background = isError ? '#dc3545' : '#34a853';
+    toast.style.background = isError ? '#dc3545' : '';
     toast.style.display = 'block';
     setTimeout(() => toast.style.display = 'none', 2000);
 }
@@ -319,7 +319,7 @@ function renderModalFolders(folders, parentElement) {
             <i class="fas fa-folder"></i>
             <span class="folder-name">${folder.name}</span>
             <button class="enter-folder-btn" onclick="fetchAndRenderModalFolders('${folder.id}')">
-                Open
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
             </button>
         `;
         parentElement.appendChild(folderDiv);

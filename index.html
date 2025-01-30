@@ -1,36 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Drive Manager</title>
-    <link rel="stylesheet" href="css/index.css">
-    <link rel="manifest" href="/manifest.json">
 
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google Drive Manager</title>
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
+
 <body>
     <div class="header">
         <h1>Google Drive Account Manager</h1>
-        <button class="btn btn-primary" id="addAccountBtn">➕ Add Google Account</button>
+        <button class="btn btn-primary" id="addAccountBtn">
+            <i class="material-symbols-outlined"> person_add </i>Add Google Account
+        </button>
         <div class="search-container">
-            <input type="text" id="searchInput" placeholder="🔍 Search for folders...">
-            <button class="btn btn-primary" id="searchBtn">Search</button>
-      
+            <input type="text" id="searchInput" placeholder=" Search for folders..." />
+            <button class="btn btn-primary" id="searchBtn"><i class="material-symbols-outlined"> search </i></button>
         </div>
     </div>
-    
+
     <div class="container">
         <h2 id="accountTitle">Accounts</h2>
         <div class="account-list" id="accountList"></div>
-    
-        <h2 id="searchTitle" style="display: none;">Search Results</h2>
+
+        <h2 id="searchTitle" style="display: none">Search Results</h2>
         <div class="search-results" id="searchResults"></div>
     </div>
-    
-    
+
     <script src="/js/index.js" type="module"></script>
     <script src="js/main.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
 </body>
+
 </html>
