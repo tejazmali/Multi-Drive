@@ -4,8 +4,8 @@
 
 A simple web application to manage multiple Google Drive accounts, browse files, and view storage usage. Built with HTML, CSS, and JavaScript using the Google Drive API.
 
-![Screenshot](/img/Screenshot%202025-01-30%20034342.png)
-![Screenshot](/img/image.png) <!-- Add a screenshot if available -->
+![Screenshot](https://github.com/tejazmali/Multi-Drive/blob/4d7a0f4d0cf7aff28bfe4fa6b36945cca6945dd7/img/Screenshot%202025-02-01%20010054.png)
+![Screenshot](https://github.com/tejazmali/Multi-Drive/blob/4d7a0f4d0cf7aff28bfe4fa6b36945cca6945dd7/img/Screenshot%202025-02-01%20010116.png) <!-- Add a screenshot if available -->
 
 ---
 
