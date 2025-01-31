@@ -3,6 +3,19 @@ let currentAccount;
 let selectedDestinationId = 'root';
 let selectedFiles = new Set();
 
+// Dummy refreshAccessToken function – replace with your own token refresh logic
+async function refreshAccessToken() {
+    console.log("Refreshing access token...");
+    // In your real implementation, refresh the token using your refresh token logic.
+    // For demo purposes, we simply resolve after a short delay.
+    return new Promise(resolve => {
+        setTimeout(() => {
+            console.log("Access token refreshed.");
+            resolve();
+        }, 1000);
+    });
+}
+
 async function fetchDriveContents(folderId = "root") {
     try {
         let response = await fetch(`https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,size,modifiedTime,parents)`, {
@@ -22,6 +35,7 @@ async function fetchDriveContents(folderId = "root") {
         return [];
     }
 }
+
 async function getRefreshToken(accessToken) {
     const response = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
@@ -39,7 +53,6 @@ async function getRefreshToken(accessToken) {
     const data = await response.json();
     return data.refresh_token;
 }
-
 
 function getFileIcon(mimeType) {
     const iconMap = {
@@ -75,13 +88,13 @@ function renderContents(files, parentElement) {
     if (files.length === 0) {
         // Create and show the enhanced placeholder
         const placeholder = document.createElement('div');
-        placeholder.className = 'placeholder-nofile ';
+        placeholder.className = 'placeholder-nofile';
         placeholder.innerHTML = `
-            <img src="https://ssl.gstatic.com/docs/doclist/images/empty_state_my_drive_v2.svg">
+            <img src="https://ssl.gstatic.com/docs/doclist/images/empty_state_my_drive_v2.svg" alt="No files">
             <div class="guXkdd">A place for all of your files</div>
             <div class="SCe7Ib">
                 Drag your files and folders here or use the " 
-                <i class="fa-solid fa-folder-plus"></i> " button to create folder
+                <i class="fa-solid fa-folder-plus"></i>" button to create folder
             </div>
         `;
         parentElement.appendChild(placeholder);
@@ -91,7 +104,7 @@ function renderContents(files, parentElement) {
             const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
             const iconClass = getFileIcon(file.mimeType);
             const size = file.size ? formatBytes(file.size) : '';
-            const modifiedTime = new Date(file.modifiedTime).toLocaleDateString();
+            const modifiedTime = file.modifiedTime ? new Date(file.modifiedTime).toLocaleDateString() : '';
 
             const itemDiv = document.createElement('div');
             itemDiv.className = 'drive-item';
@@ -99,7 +112,7 @@ function renderContents(files, parentElement) {
                 <div class="item-header">
                     <input type="checkbox" class="file-checkbox" 
                         data-file-id="${file.id}" 
-                        data-parents='${JSON.stringify(file.parents)}'>
+                        data-parents='${JSON.stringify(file.parents || [])}'>
                     <div class="item-icon">
                         <i class="fas ${iconClass}"></i>
                     </div>
@@ -129,43 +142,40 @@ function renderContents(files, parentElement) {
     }
 }
 
-
 async function createFolder() {
-const folderName = prompt("Enter folder name:");
-if (!folderName) return;
+    const folderName = prompt("Enter folder name:");
+    if (!folderName) return;
 
-const metadata = {
-name: folderName,
-mimeType: "application/vnd.google-apps.folder",
-parents: [selectedDestinationId] // Uses the currently selected folder as the parent
-};
+    const metadata = {
+        name: folderName,
+        mimeType: "application/vnd.google-apps.folder",
+        parents: [selectedDestinationId] // Uses the currently selected folder as the parent
+    };
 
-try {
-const response = await fetch("https://www.googleapis.com/drive/v3/files", {
-    method: "POST",
-    headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-    },
-    body: JSON.stringify(metadata)
-});
+    try {
+        const response = await fetch("https://www.googleapis.com/drive/v3/files", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(metadata)
+        });
 
-if (response.ok) {
-    showToast("Folder created successfully!");
-    refreshContents();
-} else {
-    throw new Error("Failed to create folder");
+        if (response.ok) {
+            showToast("Folder created successfully!");
+            refreshContents();
+        } else {
+            throw new Error("Failed to create folder");
+        }
+    } catch (error) {
+        console.error("Error creating folder:", error);
+        showToast("Failed to create folder!", true);
+    }
 }
-} catch (error) {
-console.error("Error creating folder:", error);
-showToast("Failed to create folder!", true);
-}
-}
-
-
 
 async function toggleFolder(folderId, button) {
-    const childrenDiv = button.closest('.item-header').nextElementSibling;
+    const childrenDiv = button.closest('.drive-item').querySelector('.children');
     const icon = button.querySelector('i');
     
     if (childrenDiv.children.length === 0) {
@@ -184,10 +194,13 @@ async function toggleFolder(folderId, button) {
             button.disabled = false;
         }
     } else {
-        childrenDiv.style.display = childrenDiv.style.display === 'none' ? 'block' : 'none';
-        icon.className = childrenDiv.style.display === 'none' 
-            ? 'fas fa-caret-right' 
-            : 'fas fa-caret-down';
+        if (childrenDiv.style.display === 'none' || childrenDiv.style.display === '') {
+            childrenDiv.style.display = 'block';
+            icon.className = 'fas fa-caret-down';
+        } else {
+            childrenDiv.style.display = 'none';
+            icon.className = 'fas fa-caret-right';
+        }
     }
 }
 
@@ -221,7 +234,7 @@ async function uploadFile(file, parentId = 'root') {
     // Handle completion
     xhr.onload = async () => {
         if (xhr.status === 200) {
-            showToast('File uploaded successfull !');
+            showToast('File uploaded successfully!');
             refreshContents();
         } else {
             console.error('Error uploading file:', xhr.responseText);
@@ -243,13 +256,15 @@ async function uploadFile(file, parentId = 'root') {
     xhr.send(formData);
 }
 
-
 async function deleteFile(fileId) {
     try {
-        await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
+        if (!response.ok) {
+            throw new Error("Delete request failed");
+        }
         showToast('File/folder deleted successfully!');
         return true;
     } catch (error) {
@@ -261,7 +276,7 @@ async function deleteFile(fileId) {
 
 async function renameFile(fileId, newName) {
     try {
-        await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
             method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -269,6 +284,9 @@ async function renameFile(fileId, newName) {
             },
             body: JSON.stringify({ name: newName })
         });
+        if (!response.ok) {
+            throw new Error("Rename request failed");
+        }
         showToast('File/folder renamed successfully!');
         return true;
     } catch (error) {
@@ -317,7 +335,7 @@ function setupDragAndDrop() {
     });
 }
 
-// Add this CSS for the overlay
+// Add CSS for the drop zone overlay
 const dropZoneCSS = `
 #globalDropOverlay {
     position: fixed;
@@ -335,15 +353,11 @@ const dropZoneCSS = `
 
 .drop-message {
     padding: 20px 40px;
-
-    color:rgb(255, 255, 255);
-   
+    color: rgb(255, 255, 255);
     border-radius: 8px;
     font-size: 1.5rem;
 }
 `;
-
-// Inject the styles
 const styleSheet = document.createElement("style");
 styleSheet.textContent = dropZoneCSS;
 document.head.appendChild(styleSheet);
@@ -385,24 +399,29 @@ function showToast(message, isError = false) {
     setTimeout(() => toast.style.display = 'none', 2000);
 }
 
-// Move functionality functions
+// MOVE functionality
 async function confirmMove() {
     const checkboxes = document.querySelectorAll('.file-checkbox:checked');
-    const filesToMove = Array.from(checkboxes).map(checkbox => ({
-        id: checkbox.dataset.fileId,
-        oldParents: JSON.parse(checkbox.dataset.parents)
-    }));
-    const newParentId = selectedDestinationId;
+    if (checkboxes.length === 0) return;
 
+    const newParentId = selectedDestinationId;
     try {
-        const movePromises = filesToMove.map(file => {
+        const movePromises = Array.from(checkboxes).map(async (checkbox) => {
+            const fileId = checkbox.dataset.fileId;
+            const oldParents = JSON.parse(checkbox.dataset.parents);
             const params = new URLSearchParams();
             params.append('addParents', newParentId);
-            file.oldParents.forEach(parent => params.append('removeParents', parent));
-            return fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?${params}`, {
+            oldParents.forEach(parent => params.append('removeParents', parent));
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?${params.toString()}`, {
                 method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${accessToken}` }
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
             });
+            if (!response.ok) {
+                throw new Error(`Failed to move file ${fileId}`);
+            }
         });
         
         await Promise.all(movePromises);
@@ -410,7 +429,7 @@ async function confirmMove() {
         refreshContents();
     } catch (error) {
         console.error('Error moving files:', error);
-        showToast('Failed to move some files!', true);
+        showToast('Failed to move files!', true);
     }
 
     document.getElementById('folderPickerModal').style.display = 'none';
@@ -445,6 +464,7 @@ function renderModalFolders(folders, parentElement) {
 document.addEventListener('DOMContentLoaded', async () => {
     setupDragAndDrop();
 
+    // Retrieve account information from URL and localStorage
     const urlParams = new URLSearchParams(window.location.search);
     const accountEmail = decodeURIComponent(urlParams.get('account'));
     const accounts = JSON.parse(localStorage.getItem('gdrive_accounts')) || [];
@@ -458,16 +478,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     accessToken = currentAccount.accessToken;
     refreshContents();
 
-     // 🔄 Auto Refresh Token Every 50 Minutes
-     setInterval(refreshAccessToken, 50 * 60 * 1000);
+    // 🔄 Auto Refresh Token Every 50 Minutes
+    setInterval(refreshAccessToken, 50 * 60 * 1000);
 
-    // Move button handlers
+    // Move button handler: open modal and fetch folders
     document.getElementById('moveButton').addEventListener('click', () => {
         document.getElementById('folderPickerModal').style.display = 'block';
         fetchAndRenderModalFolders('root');
     });
 
-    // Checkbox change handler
+    // Checkbox change handler: enable/disable move button based on selection
     document.addEventListener('change', (e) => {
         if (e.target.classList.contains('file-checkbox')) {
             const anyChecked = document.querySelectorAll('.file-checkbox:checked').length > 0;
@@ -475,12 +495,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Modal close handlers
+    // Modal close handler
     document.querySelector('.close-modal').addEventListener('click', () => {
         document.getElementById('folderPickerModal').style.display = 'none';
     });
 
-
+    // Close modal if clicking outside of modal content
     window.onclick = (event) => {
         const modal = document.getElementById('folderPickerModal');
         if (event.target === modal) {
@@ -490,5 +510,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-document.querySelector(".create-folder-button").addEventListener("click", createFolder);
+    document.querySelector(".create-folder-button").addEventListener("click", createFolder);
 });
