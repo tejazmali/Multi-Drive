@@ -1,9 +1,15 @@
+// ===== Global Variables =====
 let accessToken;
 let currentAccount;
 let selectedDestinationId = 'root';
 let selectedFiles = new Set();
+let draggedItemData = null; // For drag & drop move functionality
 
-// Dummy refreshAccessToken function – replace with your own token refresh logic
+// Replace these with your own credentials (if needed)
+const CLIENT_ID = 'YOUR_CLIENT_ID';
+const CLIENT_SECRET = 'YOUR_CLIENT_SECRET';
+
+// ===== Dummy refreshAccessToken function =====
 async function refreshAccessToken() {
     console.log("Refreshing access token...");
     // In your real implementation, refresh the token using your refresh token logic.
@@ -16,6 +22,7 @@ async function refreshAccessToken() {
     });
 }
 
+// ===== API Functions =====
 async function fetchDriveContents(folderId = "root") {
     try {
         let response = await fetch(`https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,size,modifiedTime,parents)`, {
@@ -54,6 +61,7 @@ async function getRefreshToken(accessToken) {
     return data.refresh_token;
 }
 
+// ===== Helper Functions =====
 function getFileIcon(mimeType) {
     const iconMap = {
         'application/vnd.google-apps.folder': 'fa-folder',
@@ -82,6 +90,7 @@ function formatBytes(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// ===== Rendering Functions =====
 function renderContents(files, parentElement) {
     parentElement.innerHTML = ''; // Clear existing content
 
@@ -108,6 +117,11 @@ function renderContents(files, parentElement) {
 
             const itemDiv = document.createElement('div');
             itemDiv.className = 'drive-item';
+            // Store the file object on the element (as a JSON string) if needed later.
+            itemDiv.dataset.file = JSON.stringify(file);
+            // Make every drive item draggable
+            itemDiv.setAttribute('draggable', 'true');
+
             itemDiv.innerHTML = `
                 <div class="item-header">
                     <input type="checkbox" class="file-checkbox" 
@@ -138,10 +152,52 @@ function renderContents(files, parentElement) {
                 <div class="children"></div>
             `;
             parentElement.appendChild(itemDiv);
+
+            // === DRAG & DROP MOVE FUNCTIONALITY ===
+            // When drag starts, save the file data to a global variable.
+            itemDiv.addEventListener('dragstart', (e) => {
+                draggedItemData = file;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', file.id);
+                itemDiv.classList.add('dragging');
+            });
+
+            // Remove dragging class when drag ends.
+            itemDiv.addEventListener('dragend', (e) => {
+                itemDiv.classList.remove('dragging');
+            });
+
+            // If this item is a folder, enable it to accept dropped items.
+            if (isFolder) {
+                // Allow drop by preventing the default behavior.
+                itemDiv.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    itemDiv.classList.add('drag-over');
+                });
+
+                itemDiv.addEventListener('dragleave', (e) => {
+                    itemDiv.classList.remove('drag-over');
+                });
+
+                itemDiv.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    itemDiv.classList.remove('drag-over');
+                    const newParentId = file.id;
+                    // Prevent dropping an item on itself
+                    if (draggedItemData && draggedItemData.id === newParentId) {
+                        showToast('Cannot move a folder into itself!', true);
+                        return;
+                    }
+                    await moveItem(draggedItemData, newParentId);
+                    draggedItemData = null;
+                });
+            }
         });
     }
 }
 
+// ===== API Actions =====
 async function createFolder() {
     const folderName = prompt("Enter folder name:");
     if (!folderName) return;
@@ -296,6 +352,7 @@ async function renameFile(fileId, newName) {
     }
 }
 
+// ===== DRAG & DROP SETUP FOR UPLOADING FILES =====
 function setupDragAndDrop() {
     // Create visual drop zone overlay
     const dropOverlay = document.createElement('div');
@@ -318,19 +375,22 @@ function setupDragAndDrop() {
         }
     });
 
-    // Handle file drop
+    // Handle file drop for uploads
     document.addEventListener('drop', async (e) => {
-        e.preventDefault();
-        dropOverlay.style.display = 'none';
+        // Prevent default drop behavior only if files are dropped
+        if (e.dataTransfer.files.length) {
+            e.preventDefault();
+            dropOverlay.style.display = 'none';
 
-        // Get current folder ID from the main view
-        const driveContents = document.getElementById('driveContents');
-        const currentFolderId = driveContents.dataset.folderId || 'root';
+            // Get current folder ID from the main view
+            const driveContents = document.getElementById('driveContents');
+            const currentFolderId = driveContents.dataset.folderId || 'root';
 
-        // Handle file uploads
-        const files = e.dataTransfer.files;
-        for (const file of files) {
-            await uploadFile(file, currentFolderId);
+            // Handle file uploads
+            const files = e.dataTransfer.files;
+            for (const file of files) {
+                await uploadFile(file, currentFolderId);
+            }
         }
     });
     
@@ -356,7 +416,7 @@ function setupDragAndDrop() {
     });
 }
 
-// Add CSS for the drop zone overlay
+// ===== CSS for Drop Zone Overlay =====
 const dropZoneCSS = `
 #globalDropOverlay {
     position: fixed;
@@ -378,11 +438,23 @@ const dropZoneCSS = `
     border-radius: 8px;
     font-size: 1.5rem;
 }
+
+/* Highlight folder when dragging over */
+.drive-item.drag-over {
+    border: 1px solid #007bff;
+    background-color: #f0f8ff;
+}
+
+/* Styling for the item being dragged */
+.drive-item.dragging {
+    opacity: 0.5;
+}
 `;
 const styleSheet = document.createElement("style");
 styleSheet.textContent = dropZoneCSS;
 document.head.appendChild(styleSheet);
 
+// ===== Refresh & Utility Functions =====
 async function refreshContents() {
     const driveContents = document.getElementById('driveContents');
     const currentFolderId = driveContents.dataset.folderId || 'root';
@@ -420,7 +492,7 @@ function showToast(message, isError = false) {
     setTimeout(() => toast.style.display = 'none', 2000);
 }
 
-// MOVE functionality
+// ===== MOVE Functionality (Using Checkboxes) =====
 async function confirmMove() {
     const checkboxes = document.querySelectorAll('.file-checkbox:checked');
     if (checkboxes.length === 0) return;
@@ -458,6 +530,35 @@ async function confirmMove() {
     document.getElementById('moveButton').disabled = true;
 }
 
+// ===== MOVE: Single Item Function =====
+async function moveItem(item, newParentId) {
+    // Use the old parents stored on the item, or default to an empty array.
+    const oldParents = item.parents || [];
+    const params = new URLSearchParams();
+    params.append('addParents', newParentId);
+    oldParents.forEach(parent => params.append('removeParents', parent));
+
+    try {
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${item.id}?${params.toString()}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (response.ok) {
+            showToast('Item moved successfully!');
+            refreshContents();
+        } else {
+            throw new Error("Move request failed");
+        }
+    } catch (error) {
+        console.error('Error moving item:', error);
+        showToast('Failed to move item!', true);
+    }
+}
+
+// ===== Modal Functions for MOVE (Multiple Items) =====
 async function fetchAndRenderModalFolders(folderId = 'root') {
     const modalFolderContents = document.getElementById('modalFolderContents');
     const files = await fetchDriveContents(folderId);
@@ -482,6 +583,7 @@ function renderModalFolders(folders, parentElement) {
     });
 }
 
+// ===== DOMContentLoaded & Initial Setup =====
 document.addEventListener('DOMContentLoaded', async () => {
     setupDragAndDrop();
 
