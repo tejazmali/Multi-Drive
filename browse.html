@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Google Drive</title>
     <link rel="shortcut icon" href="/img/logo.png" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/browse.css">
@@ -22,13 +23,20 @@
       
 
 
-        <div class="drop-zone" id="dropZone">
+        <div class="drop-zone" id="dropZone" >
             <i class="fas fa-upload"></i> Drag and drop files here to upload
         </div>
 
         <div id="driveContents"></div>
+        
     </div>
 
+    <div id="uploadProgressContainer" style="display: none;">
+        <span id="uploadProgressText">Uploading...</span>
+        <progress id="uploadProgress" value="0" max="100"></progress>
+    </div>
+    
+    
     <div class="toast" id="toast">Copied to clipboard!</div>
     <div class="modal" id="folderPickerModal">
         <div class="modal-content">
@@ -44,6 +52,5 @@
     </div>
 
 <script src="/js/browse.js"></script>
-<script src="js/main.js"></script>
 </body>
 </html>

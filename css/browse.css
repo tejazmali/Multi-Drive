@@ -134,7 +134,7 @@ body {
     bottom: 20px;
     right: 20px;
     background: white;
-    color: #333;
+
     padding: 12px 20px;
     border-radius: 8px;
     animation: slideIn 0.3s ease-out;
@@ -289,3 +289,103 @@ button {
     color: white;
 } 
 
+
+
+/* Progress Bar Container */
+#uploadProgressContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #ffffff; /* White background */
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 1000;
+    font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  }
+  
+  /* Progress Bar */
+  #uploadProgress {
+    width: 200px;
+    height: 8px;
+    border-radius: 4px;
+    background: #e0e0e0; /* Light gray background */
+    border: none;
+    appearance: none; /* Remove default styling */
+  }
+  
+  /* Webkit Progress Bar */
+  #uploadProgress::-webkit-progress-bar {
+    background: #e0e0e0; /* Light gray background */
+    border-radius: 4px;
+  }
+  
+  /* Webkit Progress Value */
+  #uploadProgress::-webkit-progress-value {
+   background-color: var(--primary-color) ;
+    border-radius: 4px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition */
+  }
+  
+  /* Firefox Progress Bar */
+  #uploadProgress::-moz-progress-bar {
+    background-color: var(--primary-color) ;
+    border-radius: 4px;
+  }
+  
+  /* Progress Text */
+  #uploadProgressText {
+    font-size: 0.9rem;
+    color: #5f6368; /* Gray text */
+    font-weight: 500;
+  }
+  
+  /* Hover Effect on Container */
+  #uploadProgressContainer:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+.placeholder-nofile{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+     
+    img{
+        width: 20%;
+        height: auto;
+     margin-top: 50px;
+    }
+}
+
+@font-face {
+    font-family: "Google Sans";
+    src: url("GoogleSans.woff2") format("woff2"),
+         url("GoogleSans.woff") format("woff");
+    font-weight: normal;
+    font-style: normal;
+}
+
+.guXkdd {
+    display: block;
+    text-align: center;
+    width: 50%;
+    height: 50px;
+    margin: 0px 0px 12px;
+    font-size: 32px;
+    font-family: "Google Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #1F1F1F;
+    
+}
+.SCe71b{
+    color: #1F1F1F;
+    font-size: 14px;
+    font-family: "Google Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+
+}

@@ -22,38 +22,24 @@ async function fetchDriveContents(folderId = "root") {
         return [];
     }
 }
-async function refreshAccessToken() {
-    if (!currentAccount || !currentAccount.refreshToken) {
-        console.error("No refresh token available!");
-        return;
-    }
+async function getRefreshToken(accessToken) {
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET, // Ensure this is kept secret
+            grant_type: 'authorization_code',
+            code: accessToken
+        })
+    });
 
-    try {
-        const response = await fetch("https://oauth2.googleapis.com/token", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-                client_id: "YOUR_CLIENT_ID",
-                client_secret: "YOUR_CLIENT_SECRET",
-                refresh_token: currentAccount.refreshToken,
-                grant_type: "refresh_token",
-            }),
-        });
-
-        const data = await response.json();
-
-        if (data.access_token) {
-            currentAccount.accessToken = data.access_token;
-            localStorage.setItem("gdrive_accounts", JSON.stringify([currentAccount]));
-            accessToken = data.access_token;
-            console.log("Token refreshed successfully!");
-        } else {
-            console.error("Failed to refresh token:", data);
-        }
-    } catch (error) {
-        console.error("Error refreshing access token:", error);
-    }
+    const data = await response.json();
+    return data.refresh_token;
 }
+
 
 function getFileIcon(mimeType) {
     const iconMap = {
@@ -84,46 +70,63 @@ function formatBytes(bytes) {
 }
 
 function renderContents(files, parentElement) {
-    parentElement.innerHTML = '';
-    files.forEach(file => {
-        const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
-        const iconClass = getFileIcon(file.mimeType);
-        const size = file.size ? formatBytes(file.size) : '';
-        const modifiedTime = new Date(file.modifiedTime).toLocaleDateString();
+    parentElement.innerHTML = ''; // Clear existing content
 
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'drive-item';
-        itemDiv.innerHTML = `
-            <div class="item-header">
-                <input type="checkbox" class="file-checkbox" 
-                    data-file-id="${file.id}" 
-                    data-parents='${JSON.stringify(file.parents)}'>
-                <div class="item-icon">
-                    <i class="fas ${iconClass}"></i>
-                </div>
-                <span class="item-name">${file.name}</span>
-                <div class="item-actions">
-                    ${!isFolder ? `<span class="file-info">${size} • ${modifiedTime}</span>` : ''}
-                    <button class="copy-btn" onclick="copyToClipboard('${file.id}')">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                    <button class="rename-btn" onclick="renameItem('${file.id}', '${file.name}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="delete-btn" onclick="deleteItem('${file.id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    ${isFolder ? `
-                        <button class="expand-btn" onclick="toggleFolder('${file.id}', this)">
-                            <i class="fas fa-caret-right"></i>
-                        </button>
-                    ` : ''}
-                </div>
+    if (files.length === 0) {
+        // Create and show the enhanced placeholder
+        const placeholder = document.createElement('div');
+        placeholder.className = 'placeholder-nofile ';
+        placeholder.innerHTML = `
+            <img src="https://ssl.gstatic.com/docs/doclist/images/empty_state_my_drive_v2.svg">
+            <div class="guXkdd">A place for all of your files</div>
+            <div class="SCe7Ib">
+                Drag your files and folders here or use the " 
+                <i class="fa-solid fa-folder-plus"></i> " button to create folder
             </div>
-            <div class="children"></div>
         `;
-        parentElement.appendChild(itemDiv);
-    });
+        parentElement.appendChild(placeholder);
+    } else {
+        // Render files as normal
+        files.forEach(file => {
+            const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+            const iconClass = getFileIcon(file.mimeType);
+            const size = file.size ? formatBytes(file.size) : '';
+            const modifiedTime = new Date(file.modifiedTime).toLocaleDateString();
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'drive-item';
+            itemDiv.innerHTML = `
+                <div class="item-header">
+                    <input type="checkbox" class="file-checkbox" 
+                        data-file-id="${file.id}" 
+                        data-parents='${JSON.stringify(file.parents)}'>
+                    <div class="item-icon">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <span class="item-name">${file.name}</span>
+                    <div class="item-actions">
+                        ${!isFolder ? `<span class="file-info">${size} • ${modifiedTime}</span>` : ''}
+                        <button class="copy-btn" onclick="copyToClipboard('${file.id}')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="rename-btn" onclick="renameItem('${file.id}', '${file.name}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="delete-btn" onclick="deleteItem('${file.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        ${isFolder ? `
+                            <button class="expand-btn" onclick="toggleFolder('${file.id}', this)">
+                                <i class="fas fa-caret-right"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="children"></div>
+            `;
+            parentElement.appendChild(itemDiv);
+        });
+    }
 }
 
 
@@ -198,19 +201,48 @@ async function uploadFile(file, parentId = 'root') {
     formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
     formData.append('file', file);
 
-    try {
-        await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-            body: formData
-        });
-        showToast('File uploaded successfully!');
-        refreshContents();
-    } catch (error) {
-        console.error('Error uploading file:', error);
+    const xhr = new XMLHttpRequest();
+
+    // Show progress bar
+    document.getElementById('uploadProgressContainer').style.display = 'block';
+
+    xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
+    xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+
+    // Update progress
+    xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+            const percentage = (event.loaded / event.total) * 100;
+            document.getElementById('uploadProgress').value = percentage;
+            document.getElementById('uploadProgressText').textContent = `Uploading... ${Math.round(percentage)}%`;
+        }
+    });
+
+    // Handle completion
+    xhr.onload = async () => {
+        if (xhr.status === 200) {
+            showToast('File uploaded successfull !');
+            refreshContents();
+        } else {
+            console.error('Error uploading file:', xhr.responseText);
+            showToast('Failed to upload file!', true);
+        }
+        // Hide progress bar
+        document.getElementById('uploadProgressContainer').style.display = 'none';
+    };
+
+    // Handle error
+    xhr.onerror = () => {
+        console.error('Error uploading file');
         showToast('Failed to upload file!', true);
-    }
+        // Hide progress bar
+        document.getElementById('uploadProgressContainer').style.display = 'none';
+    };
+
+    // Send request
+    xhr.send(formData);
 }
+
 
 async function deleteFile(fileId) {
     try {
@@ -247,27 +279,74 @@ async function renameFile(fileId, newName) {
 }
 
 function setupDragAndDrop() {
-    const dropZone = document.getElementById('dropZone');
+    // Create visual drop zone overlay
+    const dropOverlay = document.createElement('div');
+    dropOverlay.id = 'globalDropOverlay';
+    dropOverlay.innerHTML = '<div class="drop-message">Drop files to upload</div>';
+    document.body.appendChild(dropOverlay);
 
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
+    // Handle dragover on entire page
+    document.addEventListener('dragover', (e) => {
+        if (e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].kind === 'file') {
+            e.preventDefault();
+            dropOverlay.style.display = 'flex';
+        }
     });
 
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('dragover');
+    // Handle dragleave
+    document.addEventListener('dragleave', (e) => {
+        if (!e.relatedTarget || e.relatedTarget.nodeName === 'HTML') {
+            dropOverlay.style.display = 'none';
+        }
     });
 
-    dropZone.addEventListener('drop', async (e) => {
+    // Handle file drop
+    document.addEventListener('drop', async (e) => {
         e.preventDefault();
-        dropZone.classList.remove('dragover');
+        dropOverlay.style.display = 'none';
 
+        // Get current folder ID from the main view
+        const driveContents = document.getElementById('driveContents');
+        const currentFolderId = driveContents.dataset.folderId || 'root';
+
+        // Handle file uploads
         const files = e.dataTransfer.files;
         for (const file of files) {
-            await uploadFile(file);
+            await uploadFile(file, currentFolderId);
         }
     });
 }
+
+// Add this CSS for the overlay
+const dropZoneCSS = `
+#globalDropOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.drop-message {
+    padding: 20px 40px;
+
+    color:rgb(255, 255, 255);
+   
+    border-radius: 8px;
+    font-size: 1.5rem;
+}
+`;
+
+// Inject the styles
+const styleSheet = document.createElement("style");
+styleSheet.textContent = dropZoneCSS;
+document.head.appendChild(styleSheet);
 
 async function refreshContents() {
     const driveContents = document.getElementById('driveContents');

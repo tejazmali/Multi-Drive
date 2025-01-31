@@ -1,40 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MULTI DRIVE</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="/img/logo.png" type="image/x-icon">
-    <link rel="stylesheet" href="css/index.css" />
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="stylesheet" href="/css/index.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+    
+    <title>MULTI DRIVE</title>
 </head>
-
 <body>
+
     <div class="header">
         <h1>Google Drive Account Manager</h1>
-        <button class="btn btn-primary" id="addAccountBtn">
-            <i class="material-symbols-outlined"> person_add </i>Add Google Account
+        <button class="btn btn-primary" onclick="handleAuthClick()">
+            <i class="material-symbols-outlined"> person_add </i> Add Google Account
         </button>
         <div class="search-container">
-            <input type="text" id="searchInput" placeholder=" Search for folders..." />
-            <button class="btn btn-primary" id="searchBtn"><i class="material-symbols-outlined"> search </i></button>
+            <input type="text" id="searchInput" placeholder="Search for folders..." />
+            <button class="btn btn-primary" id="searchBtn">
+                <i class="material-symbols-outlined"> search </i>
+            </button>
         </div>
     </div>
 
     <div class="container">
         <h2 id="accountTitle">Accounts</h2>
-        <div class="account-list" id="accountList"></div>
+        <div class="account-list" id="accountList"> </div>
 
         <h2 id="searchTitle" style="display: none">Search Results</h2>
+        <button id="backBtn" class="btn btn-secondary" onclick="resetSearch()" style="display: none;">
+            <i class="material-symbols-outlined">arrow_back</i>
+        </button>
+
         <div class="search-results" id="searchResults"></div>
     </div>
 
-    <script src="/js/index.js" type="module"></script>
-    <script src="js/main.js"></script>
+    <!-- Google API scripts -->
+    <script src="/js/index.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
-</body>
+    <script src="/credentials.js"></script>
 
+    <script>
+        // Get the Lottie animation element
+        const lottieAnimation = document.getElementById("lottieAnimation");
+
+        // Pause the animation when it completes
+        lottieAnimation.addEventListener("complete", () => {
+            lottieAnimation.pause();
+        });
+    </script>
+
+</body>
 </html>
