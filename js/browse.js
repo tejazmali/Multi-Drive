@@ -333,6 +333,27 @@ function setupDragAndDrop() {
             await uploadFile(file, currentFolderId);
         }
     });
+    
+    // --- Added Feature: Open File Explorer on click ---
+    const dropZone = document.getElementById('dropZone');
+    const hiddenFileInput = document.getElementById('hiddenFileInput');
+    
+    // When the drop zone is clicked, trigger the hidden file input
+    dropZone.addEventListener('click', () => {
+        hiddenFileInput.click();
+    });
+    
+    // When files are selected via the file explorer, upload them
+    hiddenFileInput.addEventListener('change', async (e) => {
+        const driveContents = document.getElementById('driveContents');
+        const currentFolderId = driveContents.dataset.folderId || 'root';
+        const files = e.target.files;
+        for (const file of files) {
+            await uploadFile(file, currentFolderId);
+        }
+        // Reset the input value so that the same file can be selected again if needed
+        hiddenFileInput.value = '';
+    });
 }
 
 // Add CSS for the drop zone overlay
