@@ -197,7 +197,8 @@ function renderContents(files, parentElement) {
     }
 }
 
-// ===== API Actions =====
+
+// create folder
 async function createFolder() {
     const folderName = prompt("Enter folder name:");
     if (!folderName) return;
@@ -219,7 +220,11 @@ async function createFolder() {
         });
 
         if (response.ok) {
-            showToast("Folder created successfully!");
+            // Parse the newly created folder data
+            const folder = await response.json();
+            // Set the folder public by updating its permissions
+            await setFolderPublic(folder.id);
+            showToast("Folder created successfully and set to public!");
             refreshContents();
         } else {
             throw new Error("Failed to create folder");
@@ -227,6 +232,32 @@ async function createFolder() {
     } catch (error) {
         console.error("Error creating folder:", error);
         showToast("Failed to create folder!", true);
+    }
+}
+
+async function setFolderPublic(folderId) {
+    // This function sets the folder permissions so that anyone with the link can view it.
+    const permission = {
+        role: "reader", // or "writer" if you want edit permissions
+        type: "anyone"
+    };
+
+    try {
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${folderId}/permissions`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(permission)
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to set public permissions");
+        }
+    } catch (error) {
+        console.error("Error setting folder public:", error);
+        showToast("Folder created but failed to set public permissions!", true);
     }
 }
 
