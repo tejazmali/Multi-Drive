@@ -162,9 +162,10 @@ function renderContents(files, parentElement) {
                 itemDiv.classList.add('dragging');
             });
 
-            // Remove dragging class when drag ends.
+            // Remove dragging class and clear draggedItemData when drag ends.
             itemDiv.addEventListener('dragend', (e) => {
                 itemDiv.classList.remove('dragging');
+                draggedItemData = null;
             });
 
             // If this item is a folder, enable it to accept dropped items.
@@ -196,7 +197,6 @@ function renderContents(files, parentElement) {
         });
     }
 }
-
 
 // create folder
 async function createFolder() {
@@ -425,7 +425,7 @@ function setupDragAndDrop() {
         }
     });
     
-    // --- Added Feature: Open File Explorer on click ---
+    // --- Added Feature: Open File Explorer on click --- 
     const dropZone = document.getElementById('dropZone');
     const hiddenFileInput = document.getElementById('hiddenFileInput');
     
